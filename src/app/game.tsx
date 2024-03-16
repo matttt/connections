@@ -4,7 +4,7 @@ import { set } from 'lodash';
 import shuffle from 'lodash/shuffle'
 import { useState, useEffect, CSSProperties } from 'react'
 import { Puzzle, WordSet, SetType } from './types';
-import { useSprings, animated } from '@react-spring/web'
+import { useSprings, animated, a } from '@react-spring/web'
 import { isMobile } from 'react-device-detect';
 
 
@@ -56,7 +56,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         16,
         (idx) => {
             const { x, y } = idxToXY(idx)
-            console.log(x,y)
+            // console.log(x,y)
             return {
                 from: { x, y },
                 to: { x, y, immediate: true } // for rerender
@@ -99,7 +99,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...springs[i] }} key={i} className='absolute' >
             <div className={classes} onClick={() => handleSelect(word)}>
                 <div className='grow'></div>
-                <div className='select-none font-bold text-s md:text-xl'>{word}</div>
+                <div className='select-none font-bold text-s md:text-l'>{word}</div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -153,45 +153,83 @@ export function Game({ sideLength, puzzle }: GameProps) {
             });
             if (matchingSet) {
                 const animations = getAnimationsGivenNewAnswer(matchingSet)
-                console.log(animations);
                 let completeCount = 0
 
                 const onComplete = () => {
                     completeCount++
 
                     if (completeCount === animations.length * 2) {
-                        console.log(wordList)
-                        const newWordList = applyAnimationsToWordList(animations)
                         setWordList(applyAnimationsToWordList(animations))
                         // reset word box positions to their original spots instantly after animation
                         api.start((idx) => {
                             const { x, y } = idxToXY(idx);
-                            return { to: { x, y }, immediate:true}
+                            return {  x, y, immediate:true  }
                         })
                     }
                 }
 
+                let bounceCompleteCount = 0
+                const onBounceComplete = () => {
+                    bounceCompleteCount++
+                    if (bounceCompleteCount === selected.length) {
+                        onAllBounceComplete()
+                    }
+                }
+                const onAllBounceComplete = () => {
+                    swapAnim()
+                    setTimeout(() => {
+                        setLockIns([...lockIns, matchingSet])
+                        setSelected([])
+                    }, 1000)
+                }
+
                 api.start((idx) => {
-                    const toAnimation = animations.find(a => a.to === idx)
-                    const fromAnimation = animations.find(a => a.from === idx)
+                    const isOfSelection = selected.includes(wordList[idx])
+                    const curPos = idxToXY(idx)
 
-                    if (fromAnimation) {
-                        const { x, y } = idxToXY(fromAnimation.to)
+                    const sortedSelections = [...selected].sort((a, b) => wordList.indexOf(a) - wordList.indexOf(b))
 
-                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete  }
-                    } else if (toAnimation) {
-                        const { x, y } = idxToXY(toAnimation.from)
-
-                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete }
+                    if (isOfSelection) {
+                        return {
+                            to: [
+                                {
+                                    y: curPos.y - sideLength / 40,
+                                    delay: sortedSelections.indexOf(wordList[idx]) * 250,
+                                    config: {
+                                        duration: 200
+                                    }
+                                }, {
+                                    y: curPos.y,
+                                    config: {
+                                        duration: 200
+                                    }
+                                }], onRest: onBounceComplete
+                        }
                     } else {
-                        return { onRest: onComplete }
+                        return {}
                     }
                 })
 
-                setTimeout(() => {
-                    setLockIns([...lockIns, matchingSet])
-                    setSelected([])
-                }, 1000)
+                const swapAnim = () => {
+                    api.start((idx) => {
+                        const toAnimation = animations.find(a => a.to === idx)
+                        const fromAnimation = animations.find(a => a.from === idx)
+
+                        if (fromAnimation) {
+                            const { x, y } = idxToXY(fromAnimation.to)
+
+                            return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
+                        } else if (toAnimation) {
+                            const { x, y } = idxToXY(toAnimation.from)
+
+                            return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
+                        } else {
+                            return { onRest: onComplete, config: { duration: undefined }, }
+                        }
+                    })
+                }
+
+
             } else {
                 alert('Incorrect!');
             }
