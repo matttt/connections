@@ -2,7 +2,7 @@
 
 import { set } from 'lodash';
 import shuffle from 'lodash/shuffle'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, CSSProperties } from 'react'
 import { Puzzle, WordSet, SetType } from './types';
 import { useSprings, animated } from '@react-spring/web'
 
