@@ -4,10 +4,8 @@ import { set } from 'lodash';
 import shuffle from 'lodash/shuffle'
 import { useState, useEffect, CSSProperties } from 'react'
 import { Puzzle, WordSet, SetType } from './types';
-import { useSprings, animated, a } from '@react-spring/web'
+import { useSprings, animated, a, easings } from '@react-spring/web'
 import { isMobile } from 'react-device-detect';
-
-
 
 interface PillButtonProps {
     onClick: () => void
@@ -60,6 +58,18 @@ export function Game({ sideLength, puzzle }: GameProps) {
             return {
                 from: { x, y },
                 to: { x, y, immediate: true } // for rerender
+            }
+        },
+        [sideLength]
+    )
+
+    const [wordTextSprings, wordTextsApi] = useSprings(
+        16,
+        (idx) => {
+            // console.log(x,y)
+            return {
+                from: { opacity: 1 },
+
             }
         },
         [sideLength]
@@ -119,7 +129,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...wordSprings[i] }} key={i} className='absolute' >
             <div className={classes} onClick={() => handleSelect(word)}>
                 <div className='grow'></div>
-                <div className='select-none font-bold text-s md:text-l'>{word}</div>
+                <animated.div className='select-none font-bold text-xs md:text-[16px]' style={wordTextSprings[i]}>{word}</animated.div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -148,8 +158,8 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-xl shadow-lg">
             <div className='flex flex-col h-full'>
                 <div className='grow'></div>
-                <animated.div className='select-none font-bold' style={lockinTextSprings[i]}>{set.solution}</animated.div>
-                <animated.div style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
+                <animated.div className='select-none font-bold text-s md:text-m' style={lockinTextSprings[i]}>{set.solution}</animated.div>
+                <animated.div className='text-xs md:text-m' style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -158,7 +168,30 @@ export function Game({ sideLength, puzzle }: GameProps) {
     }
 
     const shuffleButtons = () => {
-        setWordList(shuffle(wordList))
+        const lockInWords = wordList.slice(0, lockIns.length * 4)
+        const remainingWords = wordList.slice(lockIns.length * 4, 16)
+
+        const shuffledRemainingWords = shuffle(remainingWords)
+
+        wordTextsApi.start({
+            // from: { opacity: 1 },
+            to: { opacity: 0 },
+            config: {
+                duration: 300,
+                easing: easings.easeOutCirc
+            },  
+            onRest: () => {
+                setWordList([...lockInWords, ...shuffledRemainingWords])
+                wordTextsApi.start({
+                    to: { opacity: 1 },
+                    config: {
+                        duration: 300,
+                        easing: easings.easeInCubic
+                    },  
+                })
+            }
+        })
+
     }
 
     const deselectAll = () => {
