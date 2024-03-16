@@ -28,8 +28,8 @@ interface GameProps {
 }
 
 export function Game({ sideLength, puzzle }: GameProps) {
-    const startingSelection: string[] = []
-    // const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
+    // const startingSelection: string[] = []
+    const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
     const [selected, setSelected] = useState<string[]>(startingSelection)
     const [wordList, setWordList] = useState<string[]>(shuffle(getWordList(puzzle)))
     const [isClient, setIsClient] = useState<boolean>(false)
@@ -54,11 +54,10 @@ export function Game({ sideLength, puzzle }: GameProps) {
         16,
         (idx) => {
             const { x, y } = idxToXY(idx)
+            console.log(x,y)
             return {
-                from: {
-                    x: x + 0.000001,
-                    y: y + 0.000001
-                }
+                from: { x, y },
+                to: { x, y, immediate: true } // for rerender
             }
         },
         [sideLength]
@@ -165,7 +164,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
                         // reset word box positions to their original spots instantly after animation
                         api.start((idx) => {
                             const { x, y } = idxToXY(idx);
-                            return { to: { x, y }, config: { duration: 0 } }
+                            return { to: { x, y }, immediate:true}
                         })
                     }
                 }
@@ -177,13 +176,13 @@ export function Game({ sideLength, puzzle }: GameProps) {
                     if (fromAnimation) {
                         const { x, y } = idxToXY(fromAnimation.to)
 
-                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete, config: { duration: undefined }  }
+                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete  }
                     } else if (toAnimation) {
                         const { x, y } = idxToXY(toAnimation.from)
 
-                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete, config: { duration: undefined } }
+                        return { to: { x: x + 0.00001, y: y + 0.00001 }, onRest: onComplete }
                     } else {
-                        return { onRest: onComplete, config: { duration: undefined } }
+                        return { onRest: onComplete }
                     }
                 })
 
