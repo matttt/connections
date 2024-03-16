@@ -30,8 +30,8 @@ interface GameProps {
 }
 
 export function Game({ sideLength, puzzle }: GameProps) {
-    // const startingSelection: string[] = []
-    const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
+    const startingSelection: string[] = []
+    // const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
     const [selected, setSelected] = useState<string[]>(startingSelection)
     const [wordList, setWordList] = useState<string[]>(shuffle(getWordList(puzzle)))
     const [isClient, setIsClient] = useState<boolean>(false)
@@ -52,7 +52,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         return row * 4 + col
     }
 
-    const [springs, api] = useSprings(
+    const [wordSprings, wordsApi] = useSprings(
         16,
         (idx) => {
             const { x, y } = idxToXY(idx)
@@ -60,6 +60,26 @@ export function Game({ sideLength, puzzle }: GameProps) {
             return {
                 from: { x, y },
                 to: { x, y, immediate: true } // for rerender
+            }
+        },
+        [sideLength]
+    )
+
+    const [lockinSprings, lockinApi] = useSprings(
+        4,
+        (idx) => {
+            return {
+                from: { scale: 1 }
+            }
+        },
+        [sideLength]
+    )
+
+    const [lockinTextSprings, lockinTextApi] = useSprings(
+        4,
+        (idx) => {
+            return {
+                from: { opacity: 0 }
             }
         },
         [sideLength]
@@ -96,7 +116,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
             classes += " scale-90 brightness-90"
         }
 
-        const component = <animated.div style={{ ...wordStyle, ...springs[i] }} key={i} className='absolute' >
+        const component = <animated.div style={{ ...wordStyle, ...wordSprings[i] }} key={i} className='absolute' >
             <div className={classes} onClick={() => handleSelect(word)}>
                 <div className='grow'></div>
                 <div className='select-none font-bold text-s md:text-l'>{word}</div>
@@ -125,14 +145,14 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const color = colors[set.type]
         const wordStyle = { width: sideLength - margin * 2, height: sideLength / 4 - margin * 2, top: y, left: x, backgroundColor: color }
 
-        const component = <div style={wordStyle} key={i} className="absolute text-center rounded-xl shadow-lg">
+        const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-xl shadow-lg">
             <div className='flex flex-col h-full'>
                 <div className='grow'></div>
-                <div className='select-none font-bold'>{set.solution}</div>
-                <div>{set.words.join(', ')}</div>
+                <animated.div className='select-none font-bold' style={lockinTextSprings[i]}>{set.solution}</animated.div>
+                <animated.div style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
                 <div className='grow'></div>
             </div>
-        </div>
+        </animated.div>
 
         lockInComponents.push(component)
     }
@@ -159,13 +179,34 @@ export function Game({ sideLength, puzzle }: GameProps) {
                     completeCount++
 
                     if (completeCount === animations.length * 2) {
-                        setWordList(applyAnimationsToWordList(animations))
-                        // reset word box positions to their original spots instantly after animation
-                        api.start((idx) => {
-                            const { x, y } = idxToXY(idx);
-                            return {  x, y, immediate:true  }
-                        })
+                        onAllComplete()
                     }
+                }
+
+                const onAllComplete = () => {
+                    setWordList(applyAnimationsToWordList(animations))
+                    // reset word box positions to their original spots instantly after animation
+                    wordsApi.start((idx) => {
+                        const { x, y } = idxToXY(idx);
+                        return { x, y, immediate: true }
+                    })
+
+                    setTimeout(() => {
+                        setLockIns([...lockIns, matchingSet])
+                        setSelected([])
+
+                        lockinApi.start((idx) => {
+                            if (lockIns.length === idx) {
+                                return { to: [{ scale: 1.1 }, { scale: 1 }] }
+                            }
+                        })
+
+                        lockinTextApi.start((idx) => {
+                            if (lockIns.length === idx) {
+                                return { to: [{ opacity: 1 }] }
+                            }
+                        })
+                    }, 100)
                 }
 
                 let bounceCompleteCount = 0
@@ -176,14 +217,18 @@ export function Game({ sideLength, puzzle }: GameProps) {
                     }
                 }
                 const onAllBounceComplete = () => {
-                    swapAnim()
                     setTimeout(() => {
-                        setLockIns([...lockIns, matchingSet])
-                        setSelected([])
-                    }, 1000)
+                        if (animations.length > 0) {
+
+                            swapAnim()
+                        } else {
+                            onAllComplete()
+                        }
+
+                    }, 250)
                 }
 
-                api.start((idx) => {
+                wordsApi.start((idx) => {
                     const isOfSelection = selected.includes(wordList[idx])
                     const curPos = idxToXY(idx)
 
@@ -194,7 +239,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
                             to: [
                                 {
                                     y: curPos.y - sideLength / 40,
-                                    delay: sortedSelections.indexOf(wordList[idx]) * 250,
+                                    delay: sortedSelections.indexOf(wordList[idx]) * 100,
                                     config: {
                                         duration: 200
                                     }
@@ -211,7 +256,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
                 })
 
                 const swapAnim = () => {
-                    api.start((idx) => {
+                    wordsApi.start((idx) => {
                         const toAnimation = animations.find(a => a.to === idx)
                         const fromAnimation = animations.find(a => a.from === idx)
 
