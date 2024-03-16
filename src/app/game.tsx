@@ -5,6 +5,8 @@ import shuffle from 'lodash/shuffle'
 import { useState, useEffect, CSSProperties } from 'react'
 import { Puzzle, WordSet, SetType } from './types';
 import { useSprings, animated } from '@react-spring/web'
+import { isMobile } from 'react-device-detect';
+
 
 
 interface PillButtonProps {
@@ -14,7 +16,7 @@ interface PillButtonProps {
 }
 
 function PillButton({ onClick, content = '', style = {} }: PillButtonProps) {
-    return <button onClick={onClick} style={style} className="text-s rounded-full border py-4 px-6 text-[#363636] border-[#363636] pillButton">{content}</button>
+    return <button onClick={onClick} style={style} className="text-s rounded-full border py-2 px-3 md:py-4 md:px-6 text-[#363636] border-[#363636] pillButton">{content}</button>
 }
 
 function getWordList(puzzle: Puzzle): string[] {
@@ -97,7 +99,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...springs[i] }} key={i} className='absolute' >
             <div className={classes} onClick={() => handleSelect(word)}>
                 <div className='grow'></div>
-                <div className='select-none font-bold'>{word}</div>
+                <div className='select-none font-bold text-s md:text-xl'>{word}</div>
                 <div className='grow'></div>
             </div>
         </animated.div>

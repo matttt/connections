@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useMeasure } from "@uidotdev/usehooks";
 import { Game } from './game'
 import { SetType } from './types'
+import { isMobile } from 'react-device-detect';
+
 
 export default function Home() {
   const [ref, { width, height }] = useMeasure();
@@ -10,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     const min = Math.min(width || 0, height || 0);
-    setSideLength(min * 0.6)
+    setSideLength(min * (isMobile ? .9 : 0.6))
   }, [width, height])
 
   const puzzo = {
