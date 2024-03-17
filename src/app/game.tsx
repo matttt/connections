@@ -36,7 +36,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
     const [lockIns, setLockIns] = useState<WordSet[]>([])
 
     const lockedInWords = lockIns.flatMap((set) => set.words)
-    const margin = 10;
+    const margin = sideLength / 100;
 
     const idxToXY = (idx: number) => {
         const row = Math.floor(idx / 4)
