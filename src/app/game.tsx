@@ -158,8 +158,8 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-xl shadow-lg">
             <div className='flex flex-col h-full'>
                 <div className='grow'></div>
-                <animated.div className='select-none font-bold text-s md:text-m' style={lockinTextSprings[i]}>{set.solution}</animated.div>
-                <animated.div className='text-xs md:text-m' style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
+                <animated.div className='select-none font-bold text-m md:text-m' style={lockinTextSprings[i]}>{set.solution}</animated.div>
+                <animated.div className='text-m md:text-m' style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -179,7 +179,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
             config: {
                 duration: 300,
                 easing: easings.easeOutCirc
-            },  
+            },
             onRest: () => {
                 setWordList([...lockInWords, ...shuffledRemainingWords])
                 wordTextsApi.start({
@@ -187,7 +187,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
                     config: {
                         duration: 300,
                         easing: easings.easeInCubic
-                    },  
+                    },
                 })
             }
         })
@@ -199,119 +199,186 @@ export function Game({ sideLength, puzzle }: GameProps) {
     }
 
     const submit = () => {
-        if (selected.length === 4) {
-            const matchingSet = puzzle.sets.find((set) => {
-                const selectedWords = set.words.filter((word) => selected.includes(word));
-                return selectedWords.length === 4;
-            });
-            if (matchingSet) {
-                const animations = getAnimationsGivenNewAnswer(matchingSet)
-                let completeCount = 0
 
-                const onComplete = () => {
-                    completeCount++
+        if (selected.length !== 4) {
+            return
+        }
 
-                    if (completeCount === animations.length * 2) {
-                        onAllComplete()
-                    }
+        const matchingSet = puzzle.sets.find((set) => {
+            const selectedWords = set.words.filter((word) => selected.includes(word));
+            return selectedWords.length === 4;
+        });
+
+        const correctAnimationSet = () => {
+            if (!matchingSet) return;
+
+            const animations = getAnimationsGivenNewAnswer(matchingSet)
+            let completeCount = 0
+
+            const onComplete = () => {
+                completeCount++
+
+                if (completeCount === animations.length * 2) {
+                    onAllComplete()
                 }
+            }
 
-                const onAllComplete = () => {
-                    setWordList(applyAnimationsToWordList(animations))
-                    // reset word box positions to their original spots instantly after animation
-                    wordsApi.start((idx) => {
-                        const { x, y } = idxToXY(idx);
-                        return { x, y, immediate: true }
-                    })
-
-                    setTimeout(() => {
-                        setLockIns([...lockIns, matchingSet])
-                        setSelected([])
-
-                        lockinApi.start((idx) => {
-                            if (lockIns.length === idx) {
-                                return { to: [{ scale: 1.1 }, { scale: 1 }] }
-                            }
-                        })
-
-                        lockinTextApi.start((idx) => {
-                            if (lockIns.length === idx) {
-                                return { to: [{ opacity: 1 }] }
-                            }
-                        })
-                    }, 100)
-                }
-
-                let bounceCompleteCount = 0
-                const onBounceComplete = () => {
-                    bounceCompleteCount++
-                    if (bounceCompleteCount === selected.length) {
-                        onAllBounceComplete()
-                    }
-                }
-                const onAllBounceComplete = () => {
-                    setTimeout(() => {
-                        if (animations.length > 0) {
-
-                            swapAnim()
-                        } else {
-                            onAllComplete()
-                        }
-
-                    }, 250)
-                }
-
+            const onAllComplete = () => {
+                setWordList(applyAnimationsToWordList(animations))
+                // reset word box positions to their original spots instantly after animation
                 wordsApi.start((idx) => {
-                    const isOfSelection = selected.includes(wordList[idx])
-                    const curPos = idxToXY(idx)
-
-                    const sortedSelections = [...selected].sort((a, b) => wordList.indexOf(a) - wordList.indexOf(b))
-
-                    if (isOfSelection) {
-                        return {
-                            to: [
-                                {
-                                    y: curPos.y - sideLength / 40,
-                                    delay: sortedSelections.indexOf(wordList[idx]) * 100,
-                                    config: {
-                                        duration: 200
-                                    }
-                                }, {
-                                    y: curPos.y,
-                                    config: {
-                                        duration: 200
-                                    }
-                                }], onRest: onBounceComplete
-                        }
-                    } else {
-                        return {}
-                    }
+                    const { x, y } = idxToXY(idx);
+                    return { x, y, immediate: true }
                 })
 
-                const swapAnim = () => {
-                    wordsApi.start((idx) => {
-                        const toAnimation = animations.find(a => a.to === idx)
-                        const fromAnimation = animations.find(a => a.from === idx)
+                setTimeout(() => {
+                    setLockIns([...lockIns, matchingSet])
+                    setSelected([])
 
-                        if (fromAnimation) {
-                            const { x, y } = idxToXY(fromAnimation.to)
-
-                            return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
-                        } else if (toAnimation) {
-                            const { x, y } = idxToXY(toAnimation.from)
-
-                            return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
-                        } else {
-                            return { onRest: onComplete, config: { duration: undefined }, }
+                    lockinApi.start((idx) => {
+                        if (lockIns.length === idx) {
+                            return { to: [{ scale: 1.1 }, { scale: 1 }] }
                         }
                     })
-                }
+
+                    lockinTextApi.start((idx) => {
+                        if (lockIns.length === idx) {
+                            return { to: [{ opacity: 1 }] }
+                        }
+                    })
+                }, 100)
+            }
 
 
+
+            const swapAnim = () => {
+                wordsApi.start((idx) => {
+                    const toAnimation = animations.find(a => a.to === idx)
+                    const fromAnimation = animations.find(a => a.from === idx)
+
+                    if (fromAnimation) {
+                        const { x, y } = idxToXY(fromAnimation.to)
+
+                        return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
+                    } else if (toAnimation) {
+                        const { x, y } = idxToXY(toAnimation.from)
+
+                        return { to: { x: x + 0.00001, y: y + 0.00001 }, config: { duration: undefined }, onRest: onComplete }
+                    } else {
+                        return { onRest: onComplete, config: { duration: undefined }, }
+                    }
+                })
+            }
+
+            if (animations.length > 0) {
+
+                swapAnim()
             } else {
-                alert('Incorrect!');
+                onAllComplete()
+            }
+
+        }
+
+        const incorrectAnimationSet = () => {
+            let incorrectAnimCompleteCount = 0;
+            const onIncorrectAnimComplete = () => {
+                incorrectAnimCompleteCount++
+                if (incorrectAnimCompleteCount === selected.length) {
+                    onAllIncorrectAnimComplete()
+                }
+            }
+
+            const onAllIncorrectAnimComplete = () => {
+                // setTimeout(() => {
+                //     setSelected([])
+                // }, 500)
+            }
+
+            wordsApi.start((idx) => {
+                const isOfSelection = selected.includes(wordList[idx])
+
+                if (isOfSelection) {
+                    const { x, y } = idxToXY(idx)
+
+                    const offset = sideLength / 60
+
+                    return {
+                        to: [
+                            {
+                                x: x - offset,
+
+                            }, {
+                                x: x + offset,
+
+                            }, {
+                                x: x - offset,
+
+                            }, {
+                                x: x + offset,
+
+                            }, {
+                                x: x,
+                            }], config: {
+                                duration: 75
+                            }, onRest: onIncorrectAnimComplete
+                    }
+                } else {
+                    return {}
+                }
+            })
+
+        }
+
+        let bounceCompleteCount = 0
+        const onBounceComplete = () => {
+            bounceCompleteCount++
+            if (bounceCompleteCount === selected.length) {
+                onAllBounceComplete()
             }
         }
+        const onAllBounceComplete = () => {
+            setTimeout(() => {
+                if (matchingSet) {
+
+
+                    correctAnimationSet()
+
+                } else {
+
+                    incorrectAnimationSet()
+
+                }
+            }, 250)
+        }
+
+        wordsApi.start((idx) => {
+            const isOfSelection = selected.includes(wordList[idx])
+            const curPos = idxToXY(idx)
+
+            const sortedSelections = [...selected].sort((a, b) => wordList.indexOf(a) - wordList.indexOf(b))
+
+            if (isOfSelection) {
+                return {
+                    to: [
+                        {
+                            y: curPos.y - sideLength / 40,
+                            delay: sortedSelections.indexOf(wordList[idx]) * 100,
+                            config: {
+                                duration: 200
+                            }
+                        }, {
+                            y: curPos.y,
+                            config: {
+                                duration: 200
+                            }
+                        }], onRest: onBounceComplete
+                }
+            } else {
+                return {}
+            }
+        })
+
+
     }
 
     interface Animation {
