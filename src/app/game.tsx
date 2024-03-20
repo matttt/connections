@@ -10,11 +10,14 @@ import { isMobile } from 'react-device-detect';
 interface PillButtonProps {
     onClick: () => void
     content?: any
+    disabled?: boolean
     style?: CSSProperties
 }
 
-function PillButton({ onClick, content = '', style = {} }: PillButtonProps) {
-    return <button onClick={onClick} style={style} className="text-s rounded-full border py-2 px-3 md:py-4 md:px-6 text-[#363636] border-[#363636] pillButton">{content}</button>
+function PillButton({ onClick, content = '', style = {}, disabled=false }: PillButtonProps) {
+    const disabledStyle = disabled ? { color: '#AAAAAA', borderColor: '#AAAAAA', backgroundColor: 'unset', cursor: 'default' } : {}
+    const classes = "text-s rounded-full border py-2 px-3 md:py-4 md:px-6 text-[#363636] border-[#363636] pillButton"
+    return <button onClick={onClick} style={{...style, ...disabledStyle}} className={classes}>{content}</button>
 }
 
 function getWordList(puzzle: Puzzle): string[] {
@@ -27,6 +30,7 @@ interface GameProps {
     puzzle: Puzzle;
 }
 
+
 export function Game({ sideLength, puzzle }: GameProps) {
     const startingSelection: string[] = []
     // const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
@@ -34,15 +38,20 @@ export function Game({ sideLength, puzzle }: GameProps) {
     const [wordList, setWordList] = useState<string[]>(shuffle(getWordList(puzzle)))
     const [isClient, setIsClient] = useState<boolean>(false)
     const [lockIns, setLockIns] = useState<WordSet[]>([])
+    const [mistakeCount, setMistakeCount] = useState<number>(4)
+    const [attempts, setAttempts] = useState<string[][]>([])
 
     const lockedInWords = lockIns.flatMap((set) => set.words)
-    const margin = sideLength / 100;
+    const margin = sideLength / 200;
+
+    const gridWidth = sideLength / 4
+    const gridHeight = sideLength / (isMobile ? 4 : 8)
 
     const idxToXY = (idx: number) => {
         const row = Math.floor(idx / 4)
         const col = idx % 4
-        const x = col * sideLength / 4 + margin
-        const y = row * sideLength / 4 + margin
+        const x = col * gridWidth + margin
+        const y = row * gridHeight + margin
         return { x, y }
     }
 
@@ -111,25 +120,40 @@ export function Game({ sideLength, puzzle }: GameProps) {
     for (let i = 0; i < wordList.length; i++) {
         const word = wordList[i]
 
-        const wordStyle = { width: sideLength / 4 - margin * 2, height: sideLength / 4 - margin * 2, }
+        const wordStyle = { width: gridWidth - margin * 2, height: gridHeight - margin * 2, }
 
-        let classes = "bg-[#EFEFE7] absolute text-center rounded-xl shadow-lg flex flex-col h-full w-full"
+        let classes = "bg-[#EFEFE7] absolute text-center rounded-md flex flex-col h-full w-full"
         if (lockedInWords.includes(word)) { classes += " hidden" }
 
         if (selected.length < 4) {
-            classes += " transform active:scale-90 active:brightness-90 transition cursor-pointer"
+            classes += " transform active:scale-90 active:bg-[#5a594e] active:text-pink-50 transition cursor-pointer"
         } else if (selected.length === 4 && selected.includes(word)) {
             classes += " cursor-pointer"
         }
 
         if (selected.includes(word)) {
-            classes += " scale-90 brightness-90"
+            classes += " scale-90 bg-[#5a594e] text-pink-50"
         }
+
+        const fontSizeMap = {
+            6: 'text-[16px] md:text-[20px]',
+            7: 'text-[14px] md:text-[19px]',
+            8: 'text-[12px] md:text-[18px]',
+            9: 'text-[11px] md:text-[17px]',
+            10: 'text-[10px] md:text-[16px]',
+            11: 'text-[9px] md:text-[15px]',
+            12: 'text-[8px] md:text-[14px]',
+            13: 'text-[7px] md:text-[13px]',
+            14: 'text-[6px] md:text-[12px]',
+        }
+
+        // @ts-ignore
+        const fontSize = fontSizeMap[Math.max(Math.min(14, word.length), 6)]
 
         const component = <animated.div style={{ ...wordStyle, ...wordSprings[i] }} key={i} className='absolute' >
             <div className={classes} onClick={() => handleSelect(word)}>
                 <div className='grow'></div>
-                <animated.div className='select-none font-bold text-xs md:text-[16px]' style={wordTextSprings[i]}>{word}</animated.div>
+                <animated.div className={'select-none font-bold ' + fontSize} style={wordTextSprings[i]}>{word}</animated.div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -143,7 +167,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const row = Math.floor(i / 4)
         const col = i % 4
         const x = margin;
-        const y = i * sideLength / 4 + margin
+        const y = i * sideLength / 8 + margin
 
         const colors = {
             [SetType.GREEN]: "#A7C268",
@@ -153,9 +177,9 @@ export function Game({ sideLength, puzzle }: GameProps) {
         }
 
         const color = colors[set.type]
-        const wordStyle = { width: sideLength - margin * 2, height: sideLength / 4 - margin * 2, top: y, left: x, backgroundColor: color }
+        const wordStyle = { width: sideLength - margin * 2, height: gridHeight - margin * 2, top: y, left: x, backgroundColor: color }
 
-        const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-xl shadow-lg">
+        const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-md">
             <div className='flex flex-col h-full'>
                 <div className='grow'></div>
                 <animated.div className='select-none font-bold text-m md:text-m' style={lockinTextSprings[i]}>{set.solution}</animated.div>
@@ -280,6 +304,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         }
 
         const incorrectAnimationSet = () => {
+
             let incorrectAnimCompleteCount = 0;
             const onIncorrectAnimComplete = () => {
                 incorrectAnimCompleteCount++
@@ -289,9 +314,11 @@ export function Game({ sideLength, puzzle }: GameProps) {
             }
 
             const onAllIncorrectAnimComplete = () => {
-                // setTimeout(() => {
-                //     setSelected([])
-                // }, 500)
+                setTimeout(() => {
+                    setMistakeCount(mistakeCount - 1)
+                    setAttempts([...attempts, selected])
+                    setSelected([])
+                }, 500)
             }
 
             wordsApi.start((idx) => {
@@ -339,14 +366,9 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const onAllBounceComplete = () => {
             setTimeout(() => {
                 if (matchingSet) {
-
-
                     correctAnimationSet()
-
                 } else {
-
                     incorrectAnimationSet()
-
                 }
             }, 250)
         }
@@ -435,19 +457,39 @@ export function Game({ sideLength, puzzle }: GameProps) {
         return newWordList
     }
 
-    const outerStyle = { width: sideLength, height: sideLength }
+    interface MistakeCounterProps {
+        mistakes: number
+    }
+    const MistakeCounter = ({ mistakes }: MistakeCounterProps) => {
+        return <div className="flex align-center justify-center">
+            <span className='text-lg md:text-xl mt-5'>Mistakes remaining:</span>
+            <div className='ml-3 mt-[1.6rem] flex gap-2.5 min-w-24'>
+                {Array.from({ length: mistakes }).map((_, i) => <span key={i} className="w-4 h-4 bg-[#5a594e] rounded-full align-baseline" />)}
+            </div>
+        </div>
+    }
+
+    const hasBeenSubmitted = attempts.some((a) => a.join('') === selected.join(''))
+
+    const submitButtonDisabled = selected.length !== 4 || hasBeenSubmitted
+
+    const outerStyle = { width: sideLength, height: sideLength / (isMobile ? 1 : 2) }
     return isClient && <div>
+        <div className="flex justify-center mb-5">
+            <span className="text-md">Create four groups of four!</span>
+        </div>
         <div style={outerStyle} className="relative">
             {wordComponents}
             {lockInComponents}
         </div>
+        <MistakeCounter mistakes={mistakeCount} />
         <div className="flex mt-10">
             <div className="grow"></div>
             <PillButton content="Shuffle" onClick={shuffleButtons} />
             <div className="w-2"></div>
             <PillButton content="Deselect all" onClick={deselectAll} />
             <div className="w-2"></div>
-            <PillButton content="Submit" onClick={submit} />
+            <PillButton content="Submit" disabled={submitButtonDisabled} onClick={submitButtonDisabled ? ()=>{} : submit} style={{backgroundColor: '#5a594e', color: 'white'}} />
             <div className="grow"></div>
         </div>
     </div>

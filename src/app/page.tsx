@@ -12,30 +12,55 @@ export default function Home() {
 
   useEffect(() => {
     const min = Math.min(width || 0, height || 0);
-    setSideLength(min * (isMobile ? .9 : 0.6))
+    setSideLength(min * (isMobile ? .9 : 0.7))
   }, [width, height])
 
+  // const puzzo = {
+  //   id: 'abc123',
+  //   sets: [
+  //     {
+  //       words: ['DRAGON', 'HORSE', 'RABBIT', 'TIGER'],
+  //       solution: 'CHINESE ZODIAC ANIMALS',
+  //       type: SetType.PURPLE
+  //     },
+  //     {
+  //       words: ['BUD', 'LEAF', 'PETAL', 'STALK'],
+  //       solution: 'FLOWER PARTS',
+  //       type: SetType.GREEN
+  //     },
+  //     {
+  //       words: ['GNOME', 'GOBLIN', 'OGRE', 'TROLL'],
+  //       solution: 'CREATURES IN FOLKLORE',
+  //       type: SetType.YELLOW
+  //     },
+  //     {
+  //       words: ['AGENT', 'MOLE', 'PLANT', 'SPY'],
+  //       solution: 'ONE INVOLVED IN ESPIONAGE',
+  //       type: SetType.BLUE
+  //     }
+  //   ]
+  // }
   const puzzo = {
     id: 'abc123',
     sets: [
       {
-        words: ['DRAGON', 'HORSE', 'RABBIT', 'TIGER'],
-        solution: 'CHINESE ZODIAC ANIMALS',
+        words: ['FUJIFILM', 'HASSELBLAD', 'OLYMPUS', 'POLAROID'],
+        solution: 'CAMERA BRANDS',
         type: SetType.PURPLE
       },
       {
-        words: ['BUD', 'LEAF', 'PETAL', 'STALK'],
-        solution: 'FLOWER PARTS',
+        words: ['ASTROTURF', 'JUMBOTRON', 'SCOREBOARD', 'SKYBOX'],
+        solution: 'SEEN AT A SPORTS STADIUM',
         type: SetType.GREEN
       },
       {
-        words: ['GNOME', 'GOBLIN', 'OGRE', 'TROLL'],
-        solution: 'CREATURES IN FOLKLORE',
+        words: ['BOLOGNESE', 'NEAPOLITAN', 'PARMESAN', 'VENETIAN'],
+        solution: 'ITALIAN DEMONYMS',
         type: SetType.YELLOW
       },
       {
-        words: ['AGENT', 'MOLE', 'PLANT', 'SPY'],
-        solution: 'ONE INVOLVED IN ESPIONAGE',
+        words: ['CREAMSICLE', 'JOURNEYMAN', 'KISSCAM', 'RUSHMORE'],
+        solution: 'STARTING WITH ROCK BANDS',
         type: SetType.BLUE
       }
     ]
