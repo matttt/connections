@@ -4,7 +4,7 @@ import { set } from 'lodash';
 import shuffle from 'lodash/shuffle'
 import { useState, useEffect, CSSProperties } from 'react'
 import { Puzzle, WordSet, SetType } from './types';
-import { useSprings, animated, a, easings } from '@react-spring/web'
+import { useSprings, animated, a, easings, useSpring } from '@react-spring/web'
 import { isMobile } from 'react-device-detect';
 
 interface PillButtonProps {
@@ -14,10 +14,10 @@ interface PillButtonProps {
     style?: CSSProperties
 }
 
-function PillButton({ onClick, content = '', style = {}, disabled=false }: PillButtonProps) {
+function PillButton({ onClick, content = '', style = {}, disabled = false }: PillButtonProps) {
     const disabledStyle = disabled ? { color: '#AAAAAA', borderColor: '#AAAAAA', backgroundColor: 'unset', cursor: 'default' } : {}
-    const classes = "text-s rounded-full border py-2 px-3 md:py-4 md:px-6 text-[#363636] border-[#363636] pillButton"
-    return <button onClick={onClick} style={{...style, ...disabledStyle}} className={classes}>{content}</button>
+    const classes = "text-s rounded-full border py-2 px-3 font-medium text-[#363636] border-[#363636] pillButton"
+    return <button onClick={onClick} style={{ ...style, ...disabledStyle }} className={classes}>{content}</button>
 }
 
 function getWordList(puzzle: Puzzle): string[] {
@@ -75,10 +75,8 @@ export function Game({ sideLength, puzzle }: GameProps) {
     const [wordTextSprings, wordTextsApi] = useSprings(
         16,
         (idx) => {
-            // console.log(x,y)
             return {
                 from: { opacity: 1 },
-
             }
         },
         [sideLength]
@@ -103,6 +101,10 @@ export function Game({ sideLength, puzzle }: GameProps) {
         },
         [sideLength]
     )
+
+    const [oneAwaySprings, oneAwayApi] = useSpring(() => ({
+        from: { y: 0, opacity: 0 },
+    }))
 
     useEffect(() => {
         setIsClient(true)
@@ -170,7 +172,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const row = Math.floor(i / 4)
         const col = i % 4
         const x = margin;
-        const y = i * sideLength / 8 + margin
+        const y = i * gridHeight + margin
 
         const colors = {
             [SetType.GREEN]: "#A7C268",
@@ -254,10 +256,10 @@ export function Game({ sideLength, puzzle }: GameProps) {
                 wordsApi.start((idx) => {
                     const { x, y } = idxToXY(idx);
                     return { x, y, immediate: true }
-                    })
+                })
 
                 setWordList(applyAnimationsToWordList(animations))
-                
+
                 // reset word box positions to their original spots instantly after animation
 
                 setTimeout(() => {
@@ -316,6 +318,21 @@ export function Game({ sideLength, puzzle }: GameProps) {
                 if (incorrectAnimCompleteCount === selected.length) {
                     onAllIncorrectAnimComplete()
                 }
+            }
+
+            // if the selected words match 3 of four words in a set, flash "one away" snackbar
+            const isOneAway = puzzle.sets.find((set) => {
+                const selectedWords = set.words.filter((word) => selected.includes(word));
+                return selectedWords.length === 3;
+            });
+
+            if (isOneAway) {
+                // flash "one away" snackbar
+                oneAwayApi.start({
+                    to: [{ opacity: 1, y: -10 }, { opacity: 0, delay: 500 }],
+                    from: { y: 0, opacity: 0 },
+        
+                })
             }
 
             const onAllIncorrectAnimComplete = () => {
@@ -467,7 +484,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
     }
     const MistakeCounter = ({ mistakes }: MistakeCounterProps) => {
         return <div className="flex align-center justify-center">
-            <span className='text-lg md:text-xl mt-5'>Mistakes remaining:</span>
+            <span className='text-lg md:text-md mt-5'>Mistakes remaining:</span>
             <div className='ml-3 mt-[1.6rem] flex gap-2.5 min-w-24'>
                 {Array.from({ length: mistakes }).map((_, i) => <span key={i} className="w-4 h-4 bg-[#5a594e] rounded-full align-baseline" />)}
             </div>
@@ -481,6 +498,10 @@ export function Game({ sideLength, puzzle }: GameProps) {
     const outerStyle = { width: sideLength, height: sideLength / (isMobile ? 1 : 2) }
     return isClient && <div>
         <div className="flex justify-center mb-5">
+            <animated.div className={`px-3 py-2 border border-gray-300 rounded`} style={oneAwaySprings}>One away...</animated.div>
+        </div>
+        <div className="flex justify-center mb-5">
+
             <span className="text-md">Create four groups of four!</span>
         </div>
         <div style={outerStyle} className="relative">
@@ -494,8 +515,10 @@ export function Game({ sideLength, puzzle }: GameProps) {
             <div className="w-2"></div>
             <PillButton content="Deselect all" onClick={deselectAll} />
             <div className="w-2"></div>
-            <PillButton content="Submit" disabled={submitButtonDisabled} onClick={submitButtonDisabled ? ()=>{} : submit} style={{backgroundColor: '#5a594e', color: 'white'}} />
+            <PillButton content="Submit" disabled={submitButtonDisabled} onClick={submitButtonDisabled ? () => { } : submit} style={{ backgroundColor: '#5a594e', color: 'white' }} />
             <div className="grow"></div>
         </div>
+
+        <div className="h-20"></div>
     </div>
 }

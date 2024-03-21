@@ -46,28 +46,28 @@ export default function Home() {
       {
         words: ['FUJIFILM', 'HASSELBLAD', 'OLYMPUS', 'POLAROID'],
         solution: 'CAMERA BRANDS',
-        type: SetType.PURPLE
+        type: SetType.GREEN
       },
       {
         words: ['ASTROTURF', 'JUMBOTRON', 'SCOREBOARD', 'SKYBOX'],
         solution: 'SEEN AT A SPORTS STADIUM',
-        type: SetType.GREEN
+        type: SetType.YELLOW
       },
       {
         words: ['BOLOGNESE', 'NEAPOLITAN', 'PARMESAN', 'VENETIAN'],
         solution: 'ITALIAN DEMONYMS',
-        type: SetType.YELLOW
+        type: SetType.BLUE
       },
       {
         words: ['CREAMSICLE', 'JOURNEYMAN', 'KISSCAM', 'RUSHMORE'],
         solution: 'STARTING WITH ROCK BANDS',
-        type: SetType.BLUE
+        type: SetType.PURPLE
       }
     ]
   }
 
   return (
-    <main ref={ref} className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main ref={ref} className="flex min-h-screen flex-col items-center justify-between p-12">
       <div className="grow"></div>
       <Game sideLength={sideLength} puzzle={puzzo} />
       <div className="grow"></div>
