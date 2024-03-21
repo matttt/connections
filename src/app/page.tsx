@@ -67,9 +67,10 @@ export default function Home() {
   }
 
   return (
-    <main ref={ref} className="flex min-h-screen flex-col items-center justify-between p-12">
+    <main ref={ref} className="flex min-h-screen flex-col items-center justify-between p-3 md:p-12">
       <div className="grow"></div>
       <Game sideLength={sideLength} puzzle={puzzo} />
+      <div className="grow"></div>
       <div className="grow"></div>
     </main>
   );
