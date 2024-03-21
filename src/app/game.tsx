@@ -126,7 +126,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         if (lockedInWords.includes(word)) { classes += " hidden" }
 
         if (selected.length < 4) {
-            classes += " transform active:scale-90 active:bg-[#5a594e] active:text-pink-50 cursor-pointer"
+            classes += " transform cursor-pointer" + (isMobile ? "" : " active:scale-90 active:bg-[#5a594e] active:text-pink-50")
         } else if (selected.length === 4 && selected.includes(word)) {
             classes += " cursor-pointer"
         }
