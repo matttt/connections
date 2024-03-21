@@ -122,11 +122,11 @@ export function Game({ sideLength, puzzle }: GameProps) {
 
         const wordStyle = { width: gridWidth - margin * 2, height: gridHeight - margin * 2, }
 
-        let classes = "absolute text-center rounded-md flex flex-col h-full w-full transition"
+        let classes = "absolute text-center rounded-md flex flex-col h-full w-full transition transform"
         if (lockedInWords.includes(word)) { classes += " hidden" }
 
         if (selected.length < 4) {
-            classes += " transform cursor-pointer" + (isMobile ? "" : " active:scale-90 active:bg-[#5a594e] active:text-pink-50")
+            classes += " cursor-pointer" + (isMobile ? "" : " active:scale-90 active:bg-[#5a594e] active:text-pink-50")
         } else if (selected.length === 4 && selected.includes(word)) {
             classes += " cursor-pointer"
         }
@@ -184,8 +184,8 @@ export function Game({ sideLength, puzzle }: GameProps) {
         const component = <animated.div style={{ ...wordStyle, ...lockinSprings[i] }} key={i} className="absolute text-center rounded-md">
             <div className='flex flex-col h-full'>
                 <div className='grow'></div>
-                <animated.div className='select-none font-bold text-m md:text-m' style={lockinTextSprings[i]}>{set.solution}</animated.div>
-                <animated.div className='text-m md:text-m' style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
+                <animated.div className='select-none font-bold text-sm md:text-md' style={lockinTextSprings[i]}>{set.solution}</animated.div>
+                <animated.div className='text-sm md:text-md' style={lockinTextSprings[i]}>{set.words.join(', ')}</animated.div>
                 <div className='grow'></div>
             </div>
         </animated.div>
@@ -250,16 +250,20 @@ export function Game({ sideLength, puzzle }: GameProps) {
             }
 
             const onAllComplete = () => {
-                setWordList(applyAnimationsToWordList(animations))
-                // reset word box positions to their original spots instantly after animation
-                wordsApi.start((idx) => {
+                setSelected([])
+                setTimeout(() => {
+                    wordsApi.start((idx) => {
                     const { x, y } = idxToXY(idx);
                     return { x, y, immediate: true }
+                    })
                 })
+                setWordList(applyAnimationsToWordList(animations))
+                
+                // reset word box positions to their original spots instantly after animation
 
                 setTimeout(() => {
+
                     setLockIns([...lockIns, matchingSet])
-                    setSelected([])
 
                     lockinApi.start((idx) => {
                         if (lockIns.length === idx) {
