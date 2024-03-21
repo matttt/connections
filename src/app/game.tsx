@@ -253,34 +253,29 @@ export function Game({ sideLength, puzzle }: GameProps) {
             }
 
             const onAllComplete = () => {
+                setWordList(applyAnimationsToWordList(animations))
+                setSelected([])
+                setLockIns([...lockIns, matchingSet])
+
                 wordsApi.start((idx) => {
                     const { x, y } = idxToXY(idx);
                     return { x, y, immediate: true }
+                    // return { x, y }
                 })
 
-                setWordList(applyAnimationsToWordList(animations))
-
                 // reset word box positions to their original spots instantly after animation
+                lockinApi.start((idx) => {
+                    if (lockIns.length === idx) {
+                        return { to: [{ scale: 1.1 }, { scale: 1 }] }
+                    }
+                })
 
-                setTimeout(() => {
-                    setSelected([])
-                    setLockIns([...lockIns, matchingSet])
-
-                    lockinApi.start((idx) => {
-                        if (lockIns.length === idx) {
-                            return { to: [{ scale: 1.1 }, { scale: 1 }] }
-                        }
-                    })
-
-                    lockinTextApi.start((idx) => {
-                        if (lockIns.length === idx) {
-                            return { to: [{ opacity: 1 }] }
-                        }
-                    })
-                }, 100)
+                lockinTextApi.start((idx) => {
+                    if (lockIns.length === idx) {
+                        return { to: [{ opacity: 1 }] }
+                    }
+                })
             }
-
-
 
             const swapAnim = () => {
                 wordsApi.start((idx) => {
@@ -311,7 +306,6 @@ export function Game({ sideLength, puzzle }: GameProps) {
         }
 
         const incorrectAnimationSet = () => {
-
             let incorrectAnimCompleteCount = 0;
             const onIncorrectAnimComplete = () => {
                 incorrectAnimCompleteCount++
@@ -447,7 +441,6 @@ export function Game({ sideLength, puzzle }: GameProps) {
                 continue
             } else {
                 // find target spot in target row. 
-
                 // make sure each index along x is neither occupied by a word already in the correct place or is already the destination of an animation
                 for (let x = 0; x < 4; x++) {
                     const idxToCheck = colRowToIdx(x, targetRow)
@@ -457,7 +450,6 @@ export function Game({ sideLength, puzzle }: GameProps) {
 
                     if (!alreadyHasAnAnswerWord && !alreadyHasAnimation) {
                         animations.push({ from: i, to: idxToCheck })
-                        // animations.push({ from: idxToCheck, to: i })
                         break
                     }
                 }
