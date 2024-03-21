@@ -122,7 +122,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
 
         const wordStyle = { width: gridWidth - margin * 2, height: gridHeight - margin * 2, }
 
-        let classes = "bg-[#EFEFE7] absolute text-center rounded-md flex flex-col h-full w-full"
+        let classes = "absolute text-center rounded-md flex flex-col h-full w-full"
         if (lockedInWords.includes(word)) { classes += " hidden" }
 
         if (selected.length < 4) {
@@ -133,6 +133,8 @@ export function Game({ sideLength, puzzle }: GameProps) {
 
         if (selected.includes(word)) {
             classes += " scale-90 bg-[#5a594e] text-pink-50"
+        } else {
+            classes += " bg-[#EFEFE7]"
         }
 
         const fontSizeMap = {

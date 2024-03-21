@@ -12,7 +12,7 @@ export default function Home() {
 
   useEffect(() => {
     const min = Math.min(width || 0, height || 0);
-    setSideLength(min * (isMobile ? .9 : 0.7))
+    setSideLength(min * (isMobile ? .95 : 0.7))
   }, [width, height])
 
   // const puzzo = {
