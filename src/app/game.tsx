@@ -32,8 +32,8 @@ interface GameProps {
 
 
 export function Game({ sideLength, puzzle }: GameProps) {
-    const startingSelection: string[] = []
-    // const startingSelection = ['DRAGON', 'HORSE', 'RABBIT', 'TIGER']
+    // const startingSelection: string[] = []
+    const startingSelection = ['OLYMPUS', 'POLAROID', 'HASSELBLAD', 'FUJIFILM']
     const [selected, setSelected] = useState<string[]>(startingSelection)
     const [wordList, setWordList] = useState<string[]>(shuffle(getWordList(puzzle)))
     const [isClient, setIsClient] = useState<boolean>(false)
@@ -126,6 +126,7 @@ export function Game({ sideLength, puzzle }: GameProps) {
         if (lockedInWords.includes(word)) { classes += " hidden" }
 
         if (selected.length < 4) {
+            // classes += " cursor-pointer" + (isMobile ? "" : " active:scale-90 active:bg-[#5a594e] active:text-pink-50")
             classes += " cursor-pointer" + (isMobile ? "" : " active:scale-90 active:bg-[#5a594e] active:text-pink-50")
         } else if (selected.length === 4 && selected.includes(word)) {
             classes += " cursor-pointer"
@@ -250,19 +251,17 @@ export function Game({ sideLength, puzzle }: GameProps) {
             }
 
             const onAllComplete = () => {
-                setSelected([])
-                setTimeout(() => {
-                    wordsApi.start((idx) => {
+                wordsApi.start((idx) => {
                     const { x, y } = idxToXY(idx);
                     return { x, y, immediate: true }
                     })
-                })
+
                 setWordList(applyAnimationsToWordList(animations))
                 
                 // reset word box positions to their original spots instantly after animation
 
                 setTimeout(() => {
-
+                    setSelected([])
                     setLockIns([...lockIns, matchingSet])
 
                     lockinApi.start((idx) => {
